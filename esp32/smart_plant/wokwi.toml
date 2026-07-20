@@ -1,4 +1,4 @@
 [wokwi]
 version = 1
-firmware = "smart_plant.ino"
 elf = "build/smart_plant.ino.elf"
+firmware = "build/smart_plant.ino.bin"
