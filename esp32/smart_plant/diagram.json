@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "author": "Antigravity",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-slide-potentiometer",
+      "id": "soil_pot",
+      "top": -150,
+      "left": -250,
+      "attrs": { "travelLength": "30" }
+    },
+    {
+      "type": "wokwi-slide-potentiometer",
+      "id": "water_pot",
+      "top": -50,
+      "left": -250,
+      "attrs": { "travelLength": "30" }
+    },
+    {
+      "type": "wokwi-slide-potentiometer",
+      "id": "temp_pot",
+      "top": 50,
+      "left": -250,
+      "attrs": { "travelLength": "30" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "pump_led",
+      "top": 150,
+      "left": -150,
+      "attrs": { "color": "blue" }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "text_soil",
+      "top": -180,
+      "left": -250,
+      "attrs": { "text": "Soil Moisture (Pin 36)" }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "text_water",
+      "top": -80,
+      "left": -250,
+      "attrs": { "text": "Water Tank Level (Pin 34)" }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "text_temp",
+      "top": 20,
+      "left": -250,
+      "attrs": { "text": "Temperature (Pin 39)" }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "text_pump",
+      "top": 180,
+      "left": -200,
+      "attrs": { "text": "Water Pump Relay/LED (Pin 5)" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+
+    [ "soil_pot:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "soil_pot:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "soil_pot:SIG", "esp:36", "green", [ "v0" ] ],
+
+    [ "water_pot:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "water_pot:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "water_pot:SIG", "esp:34", "blue", [ "v0" ] ],
+
+    [ "temp_pot:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "temp_pot:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "temp_pot:SIG", "esp:39", "yellow", [ "v0" ] ],
+
+    [ "pump_led:A", "esp:5", "blue", [ "v0" ] ],
+    [ "pump_led:C", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
