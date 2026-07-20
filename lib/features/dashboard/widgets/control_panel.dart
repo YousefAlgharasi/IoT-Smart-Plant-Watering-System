@@ -1,19 +1,65 @@
 import 'package:flutter/material.dart';
 import '../../../services/firestore_service.dart';
+import '../../../models/device_model.dart';
 
-class ControlPanel extends StatelessWidget {
-  final String deviceId;
-  final bool isAutomatic;
+class ControlPanel extends StatefulWidget {
+  final DeviceModel device;
 
   const ControlPanel({
     super.key,
-    required this.deviceId,
-    required this.isAutomatic,
+    required this.device,
   });
 
   @override
+  State<ControlPanel> createState() => _ControlPanelState();
+}
+
+class _ControlPanelState extends State<ControlPanel> {
+  final FirestoreService _firestoreService = FirestoreService();
+  bool _isRequesting = false;
+
+  Future<void> _handleWaterNow() async {
+    if (_isRequesting || widget.device.pump || widget.device.automatic) return;
+
+    setState(() {
+      _isRequesting = true;
+    });
+
+    try {
+      // 1. Set pump = true
+      await _firestoreService.updateDeviceFields(widget.device.id, {'pump': true});
+      
+      // 2. Wait wateringDuration seconds
+      await Future.delayed(Duration(seconds: widget.device.wateringDuration));
+      
+      // 3. Set pump = false
+      await _firestoreService.updateDeviceFields(widget.device.id, {'pump': false});
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Watering completed successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to complete watering: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRequesting = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final firestoreService = FirestoreService();
+    final isAutomatic = widget.device.automatic;
+    final isPumpOn = widget.device.pump;
+    final isWateringDisabled = isAutomatic || isPumpOn || _isRequesting;
 
     return Card(
       elevation: 0,
@@ -60,17 +106,20 @@ class ControlPanel extends StatelessWidget {
                 ),
                 Switch(
                   value: isAutomatic,
-                  onChanged: (value) async {
-                    try {
-                      await firestoreService.updateDeviceFields(deviceId, {'automatic': value});
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to update mode: $e')),
-                        );
-                      }
-                    }
-                  },
+                  onChanged: _isRequesting
+                      ? null
+                      : (value) async {
+                          try {
+                            await _firestoreService.updateDeviceFields(
+                                widget.device.id, {'automatic': value});
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to update mode: $e')),
+                              );
+                            }
+                          }
+                        },
                 ),
               ],
             ),
@@ -79,28 +128,21 @@ class ControlPanel extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: FilledButton.icon(
-                onPressed: isAutomatic
-                    ? null // Disable manual watering if automatic is on
-                    : () async {
-                        try {
-                          await firestoreService.updateDeviceFields(deviceId, {'pump': true});
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Pump turned ON manually')),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to turn on pump: $e')),
-                            );
-                          }
-                        }
-                      },
-                icon: const Icon(Icons.water_drop),
-                label: const Text(
-                  'Water Now',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                onPressed: isWateringDisabled ? null : _handleWaterNow,
+                icon: (isPumpOn || _isRequesting)
+                    ? Container(
+                        width: 24,
+                        height: 24,
+                        padding: const EdgeInsets.all(2.0),
+                        child: const CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      )
+                    : const Icon(Icons.water_drop),
+                label: Text(
+                  (isPumpOn || _isRequesting) ? 'Watering...' : 'Water Now',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(

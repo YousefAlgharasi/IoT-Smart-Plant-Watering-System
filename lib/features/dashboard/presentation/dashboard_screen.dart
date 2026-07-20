@@ -148,8 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildControls(BuildContext context, DeviceModel device) {
     return ControlPanel(
-      deviceId: device.id,
-      isAutomatic: device.automatic,
+      device: device,
     );
   }
 }
