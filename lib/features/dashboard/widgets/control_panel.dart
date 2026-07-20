@@ -1,28 +1,20 @@
 import 'package:flutter/material.dart';
+import '../../../services/firestore_service.dart';
 
-class ControlPanel extends StatefulWidget {
+class ControlPanel extends StatelessWidget {
+  final String deviceId;
   final bool isAutomatic;
 
   const ControlPanel({
     super.key,
+    required this.deviceId,
     required this.isAutomatic,
   });
 
   @override
-  State<ControlPanel> createState() => _ControlPanelState();
-}
-
-class _ControlPanelState extends State<ControlPanel> {
-  late bool _isAuto;
-
-  @override
-  void initState() {
-    super.initState();
-    _isAuto = widget.isAutomatic;
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final firestoreService = FirestoreService();
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -67,11 +59,17 @@ class _ControlPanelState extends State<ControlPanel> {
                   ),
                 ),
                 Switch(
-                  value: _isAuto,
-                  onChanged: (value) {
-                    setState(() {
-                      _isAuto = value;
-                    });
+                  value: isAutomatic,
+                  onChanged: (value) async {
+                    try {
+                      await firestoreService.updateDeviceFields(deviceId, {'automatic': value});
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to update mode: $e')),
+                        );
+                      }
+                    }
                   },
                 ),
               ],
@@ -81,13 +79,23 @@ class _ControlPanelState extends State<ControlPanel> {
               width: double.infinity,
               height: 56,
               child: FilledButton.icon(
-                onPressed: _isAuto
+                onPressed: isAutomatic
                     ? null // Disable manual watering if automatic is on
-                    : () {
-                        // Handle manual watering
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Watering started...')),
-                        );
+                    : () async {
+                        try {
+                          await firestoreService.updateDeviceFields(deviceId, {'pump': true});
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Pump turned ON manually')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to turn on pump: $e')),
+                            );
+                          }
+                        }
                       },
                 icon: const Icon(Icons.water_drop),
                 label: const Text(
@@ -101,7 +109,7 @@ class _ControlPanelState extends State<ControlPanel> {
                 ),
               ),
             ),
-            if (_isAuto)
+            if (isAutomatic)
               Padding(
                 padding: const EdgeInsets.only(top: 12.0),
                 child: Text(
