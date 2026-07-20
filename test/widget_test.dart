@@ -6,7 +6,7 @@ void main() {
   testWidgets('Dashboard responsive layout test', (WidgetTester tester) async {
     await tester.pumpWidget(const SmartPlantApp());
 
-    expect(find.text('Smart Plant Dashboard'), findsOneWidget);
+    expect(find.text('Smart Plant Watering'), findsOneWidget);
     expect(find.byType(LayoutBuilder), findsWidgets);
   });
 }

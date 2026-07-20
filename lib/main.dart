@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Firebase initialization goes here later
+  
+  try {
+    // Note: If you want to configure Firebase for all platforms using flutterfire CLI, 
+    // run `flutterfire configure` and then pass `options: DefaultFirebaseOptions.currentPlatform`
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase initialization error: $e');
+  }
+  
   runApp(const SmartPlantApp());
 }
 
